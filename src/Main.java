@@ -58,7 +58,7 @@ public class Main {
 	boolean pause = true;
 
 	public static void main(String args[]) {
-		Main m = new Main("cgol", "save", 750, 750, 5, 5);
+		Main m = new Main("cgol", "save", 750, 750, 75, 75);
 	}
 
 	// constructor initializes objects for display and displays empty board
