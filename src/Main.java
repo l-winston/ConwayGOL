@@ -259,6 +259,7 @@ public class Main {
 		graphics = null;
 		g2d = null;
 		frame.setLocationRelativeTo(null);
+		frame.setResizable(false);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		canvas.setFocusable(true);
 
@@ -284,6 +285,10 @@ public class Main {
 					break;
 				case KeyEvent.VK_L:
 					readFromFile();
+					break;
+				case KeyEvent.VK_C:
+					grid = new boolean[grid.length][grid[0].length];
+					draw();
 					break;
 				}
 			}
@@ -323,6 +328,7 @@ public class Main {
 			public void mouseReleased(MouseEvent e) {
 				clicker.cancel();
 				clicker = new Timer();
+				lastOn = new Point(-1, -1);
 			}
 
 			@Override
