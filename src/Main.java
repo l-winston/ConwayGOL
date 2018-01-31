@@ -22,40 +22,64 @@ import java.util.TimerTask;
 import javax.swing.JFrame;
 
 public class Main {
-	static final String saveFile = "save";
+	String name, filename;
 
-	// window size
-	static final int X = 750;
-	static final int Y = 750;
+	// window dimensions
+	int width, height;
 
-	static final int TILE_WIDTH = 10;
-	static final int TILE_HEIGHT = 10;
+	// each square's dimensions
+	int tile_width;
+	int tile_height;
 
-	static boolean[][] grid = new boolean[Y / TILE_HEIGHT][X / TILE_WIDTH];
+	// stores board state
+	boolean[][] grid;
 
-	static JFrame frame;
-	static BufferedImage image = new BufferedImage(X, Y, BufferedImage.TYPE_INT_RGB);
-	static Canvas canvas = new Canvas();
-	static GraphicsEnvironment ge;
-	static GraphicsConfiguration gc;
-	static GraphicsDevice gd;
-	static Graphics graphics;
-	static Graphics2D g2d;
-	static BufferStrategy buffer;
+	// objects used for display
+	JFrame frame;
+	BufferedImage image;
+	Canvas canvas = new Canvas();
+	GraphicsEnvironment ge;
+	GraphicsConfiguration gc;
+	GraphicsDevice gd;
+	Graphics graphics;
+	Graphics2D g2d;
+	BufferStrategy buffer;
 
-	static Timer gameTick;
-	static Timer clicker;
+	// timer to update each tick (turn) of the game
+	Timer gameTick;
+	// timer to register held down mouse as multiple clicks
+	Timer clicker;
 
-	static Point lastOn = new Point(-1, -1);
+	// the last cell that was toggled (by mouse)
+	Point lastOn = new Point(-1, -1);
 
-	static boolean pause = true;
+	// when true, execute turns
+	// when false, freeze
+	boolean pause = true;
 
 	public static void main(String args[]) {
+		Main m = new Main("cgol", "save", 750, 750, 5, 5);
+	}
+
+	// constructor initializes objects for display and displays empty board
+	public Main(String name, String filename, int width, int height, int board_width, int board_height) {
+		this.width = width;
+		this.height = height;
+		this.name = name;
+		this.filename = filename;
+
+		this.tile_width = width / board_width;
+		this.tile_height = height / board_height;
+
+		grid = new boolean[board_height][board_width];
+		image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
 		initFrame();
 		draw();
 	}
 
-	private static void start() {
+	// starts a timer that runs each turn of the game
+	private void start() {
 		gameTick = new Timer();
 		gameTick.schedule(new TimerTask() {
 
@@ -68,22 +92,24 @@ public class Main {
 		}, 0, 100);
 	}
 
-	private static void stop() {
+	// ends the timer
+	private void stop() {
 		gameTick.cancel();
 	}
 
-	private static void draw() {
+	// displays the board
+	private void draw() {
 		g2d = image.createGraphics();
 
 		g2d.setColor(Color.black);
-		g2d.fillRect(0, 0, X, Y);
+		g2d.fillRect(0, 0, width, height);
 
 		g2d.setColor(Color.white);
 
 		for (int i = 0; i < grid.length; i++) {
 			for (int j = 0; j < grid[0].length; j++) {
 				if (grid[i][j])
-					g2d.fillRect(j * TILE_WIDTH, i * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT);
+					g2d.fillRect(j * tile_width, i * tile_height, tile_width, tile_height);
 			}
 		}
 
@@ -94,7 +120,8 @@ public class Main {
 		buffer.show();
 	}
 
-	private static void update() {
+	// increments the boardstate by 1 turn
+	private void update() {
 		boolean[][] temp = new boolean[grid.length][grid[0].length];
 
 		for (int i = 0; i < grid.length; i++) {
@@ -107,7 +134,8 @@ public class Main {
 		grid = temp;
 	}
 
-	private static int count(int i, int j) {
+	// returns the number of adjacent live cells
+	private int count(int i, int j) {
 		int ret = 0;
 		try {
 			if (grid[i - 1][j - 1])
@@ -160,7 +188,8 @@ public class Main {
 		return ret;
 	}
 
-	private static void saveToFile(String filename) {
+	// outputs the boardstate to a file
+	private void saveToFile() {
 		PrintWriter pw = null;
 
 		try {
@@ -181,7 +210,8 @@ public class Main {
 		pw.close();
 	}
 
-	private static void readFromFile(String filename) {
+	// reads boardstate from a file
+	private void readFromFile() {
 		Scanner scan = null;
 
 		try {
@@ -203,16 +233,17 @@ public class Main {
 				grid[i][j] = scan.nextInt() == 0 ? false : true;
 			}
 		}
-		
+
 		draw();
 	}
 
-	private static void initFrame() {
+	// Initialization of objects needed for display
+	private void initFrame() {
 
-		frame = new JFrame("GOL");
+		frame = new JFrame(name);
 		frame.setFocusable(false);
 		frame.setVisible(true);
-		canvas.setSize(X, Y);
+		canvas.setSize(width, height);
 		frame.add(canvas);
 		frame.pack();
 		frame.setIgnoreRepaint(true);
@@ -223,7 +254,7 @@ public class Main {
 		gd = ge.getDefaultScreenDevice();
 		gc = gd.getDefaultConfiguration();
 		// Create off-screen drawing surface
-		image = gc.createCompatibleImage(X, Y);
+		image = gc.createCompatibleImage(width, height);
 		// Objects needed for rendering...
 		graphics = null;
 		g2d = null;
@@ -234,7 +265,8 @@ public class Main {
 		canvas.addKeyListener(new KeyListener() {
 
 			@Override
-			public void keyTyped(KeyEvent e) {}
+			public void keyTyped(KeyEvent e) {
+			}
 
 			@Override
 			public void keyPressed(KeyEvent e) {
@@ -248,22 +280,24 @@ public class Main {
 						stop();
 					break;
 				case KeyEvent.VK_S:
-					saveToFile(saveFile);
+					saveToFile();
 					break;
 				case KeyEvent.VK_L:
-					readFromFile(saveFile);
+					readFromFile();
 					break;
 				}
 			}
 
 			@Override
-			public void keyReleased(KeyEvent e) {}
+			public void keyReleased(KeyEvent e) {
+			}
 		});
 
 		canvas.addMouseListener(new MouseListener() {
 
 			@Override
-			public void mouseClicked(MouseEvent e) {}
+			public void mouseClicked(MouseEvent e) {
+			}
 
 			@Override
 			public void mousePressed(MouseEvent e) {
@@ -275,8 +309,8 @@ public class Main {
 						Point currentMousePos = canvas.getMousePosition();
 						if (currentMousePos == null)
 							return;
-						Point pos = new Point((int) (currentMousePos.getY() / TILE_HEIGHT),
-								(int) (currentMousePos.getX() / TILE_WIDTH));
+						Point pos = new Point((int) (currentMousePos.getY() / tile_height),
+								(int) (currentMousePos.getX() / tile_width));
 						if (!pos.equals(lastOn))
 							grid[pos.x][pos.y] ^= true;
 						lastOn = pos;
@@ -286,11 +320,18 @@ public class Main {
 			}
 
 			@Override
-			public void mouseReleased(MouseEvent e) {}
+			public void mouseReleased(MouseEvent e) {
+				clicker.cancel();
+				clicker = new Timer();
+			}
+
 			@Override
-			public void mouseEntered(MouseEvent e) {}
+			public void mouseEntered(MouseEvent e) {
+			}
+
 			@Override
-			public void mouseExited(MouseEvent e) {}
+			public void mouseExited(MouseEvent e) {
+			}
 
 		});
 	}
