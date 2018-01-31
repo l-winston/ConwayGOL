@@ -22,7 +22,9 @@ import java.util.TimerTask;
 import javax.swing.JFrame;
 
 public class Main {
-	String name, filename;
+	int delay = 10;
+
+	String filename;
 
 	// window dimensions
 	int width, height;
@@ -65,7 +67,6 @@ public class Main {
 	public Main(String name, String filename, int width, int height, int board_width, int board_height) {
 		this.width = width;
 		this.height = height;
-		this.name = name;
 		this.filename = filename;
 
 		this.tile_width = width / board_width;
@@ -73,6 +74,7 @@ public class Main {
 
 		grid = new boolean[board_height][board_width];
 		image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		frame = new JFrame(name);
 
 		initFrame();
 		draw();
@@ -80,6 +82,8 @@ public class Main {
 
 	// starts a timer that runs each turn of the game
 	private void start() {
+		if (gameTick != null)
+			gameTick.cancel();
 		gameTick = new Timer();
 		gameTick.schedule(new TimerTask() {
 
@@ -89,7 +93,7 @@ public class Main {
 				draw();
 			}
 
-		}, 0, 100);
+		}, 0, delay);
 	}
 
 	// ends the timer
@@ -239,14 +243,16 @@ public class Main {
 
 	// Initialization of objects needed for display
 	private void initFrame() {
-
-		frame = new JFrame(name);
 		frame.setFocusable(false);
+		frame.setIgnoreRepaint(true);
 		frame.setVisible(true);
+		frame.setResizable(false);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
 		canvas.setSize(width, height);
 		frame.add(canvas);
 		frame.pack();
-		frame.setIgnoreRepaint(true);
+
 		canvas.createBufferStrategy(2);
 		buffer = canvas.getBufferStrategy();
 		// Get graphics configuration...
@@ -258,9 +264,8 @@ public class Main {
 		// Objects needed for rendering...
 		graphics = null;
 		g2d = null;
+
 		frame.setLocationRelativeTo(null);
-		frame.setResizable(false);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		canvas.setFocusable(true);
 
 		canvas.addKeyListener(new KeyListener() {
@@ -290,7 +295,20 @@ public class Main {
 					grid = new boolean[grid.length][grid[0].length];
 					draw();
 					break;
+				case KeyEvent.VK_EQUALS:
+					if (delay < 2000) {
+						delay *= 2;
+						start();
+					}
+					break;
+				case KeyEvent.VK_MINUS:
+					if (delay > 1) {
+						delay /= 2;
+						start();
+					}
+					break;
 				}
+
 			}
 
 			@Override
@@ -316,10 +334,11 @@ public class Main {
 							return;
 						Point pos = new Point((int) (currentMousePos.getY() / tile_height),
 								(int) (currentMousePos.getX() / tile_width));
-						if (!pos.equals(lastOn))
+						if (!pos.equals(lastOn)) {
 							grid[pos.x][pos.y] ^= true;
-						lastOn = pos;
-						draw();
+							lastOn = pos;
+							draw();
+						}
 					}
 				}, 0, 10);
 			}
